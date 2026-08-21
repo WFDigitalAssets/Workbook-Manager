@@ -9,6 +9,20 @@ send new tag requests to the TagsRUs agent.
 It runs locally on **roc-wf-rv** and is the PowerBI+Workbook companion to the
 web-hosted Tag Request form (which runs separately on ROC-TAGSRUS).
 
+## TLDR
+**Read these things at least**
+
+Two scheduled tasks:
+- **Hourly workbook refresh** - Re-analyzes the workbooks once every hour and re-writes to the statuses to `WorkbookStatus` in `TRD_MSTR`. 
+- **Daily send out report** - Uses the smtp send relay from `tagsrus-agent@automationewp.com` to send out a report every weekday at 12PM.
+
+The handoffs for the workbook management are as follows:
+- **Better tag completion detection.** The current `check_tag_completion` writes to the `TagRequestLog` and `TagRequestItems` and determines if a tag is complete by seeing if it has on non-null value in it's history. I've made a better version called `check_tag_completion_TEST` that tests writing in a month recency window so PLCs that are under an unscheduled trigger, discoennected or turned off aren't counted has "not completed". 
+
+- **CC the controls tech of each mill's workbook when sending to the agent** - Currently by default, the payload is using my email for `email_from`. For better visibility, adding a condition that sends the controls tech email for each mill workbook would work.
+- **More versatile parsing** - The workbook parser breaks if the columns are out of order and if the headers don't follow the standard naming. Making it more versatile in terms of parsing avoids these hiccups.
+- **Normalize the workbooks** - You can derive all the missing inputs so that it directly maps to the columns in the tag request form (i.e. min max, units) from the other columns in the workbook. This may take some time though.
+
 
 ## What it does
 
@@ -27,6 +41,7 @@ web-hosted Tag Request form (which runs separately on ROC-TAGSRUS).
   path) and suggests fixes. Click-to-run; suggest-only.
 - **Send new tags** — opens an Outlook draft with a mill's new tags formatted for
   the TagsRUs agent, for you to review and send.
+
 
 
 ## How it works (high level)
@@ -116,21 +131,12 @@ manual button covers the "I need it right now" case.
 
 ### Infrastructure & deployment
 
-- **Daily emailed rollout report** — a scheduled Mon–Fri 11 AM email of the
-  report to Valentin and Ron is planned but not built. Decide **SMTP vs Outlook
-  COM** first: SMTP works headless (recommended, like the agent's escalation
-  emails); Outlook COM needs an interactive login, so a scheduled send may not
-  fire unless someone is logged in.
 
 - **Move to ROC-TAGSRUS (hosted).** LLM (`api.anthropic.com:443`) and SQL
   (`ROC-HIST01:1433`) outbound are already open there. The unsolved piece is how
-  the workbook `.xlsx` files. Microsoft 365 is already in roc-tagsrus so you should theoretically be able to derive the onedrive sync to the roc-tagsrus machine. Additionally, you will need to move the PLC Tag folder to a centralized area (i.e. The TagsRUs folder) for security purposes.
+  the workbook `.xlsx` files. Microsoft 365 is already in roc-tagsrus so you should theoretically be able to derive the onedrive sync to the roc-tagsrus machine. Additionally, you will need to move the PLC Tag folder to a centralized area (i.e. The TagsRUs folder) for security purposes. IF YOU DO THIS YOU WILL NEED TO IMPLEMENT ACCESS CONTROL
 
 - **Change credentials to company LLM API account** - Current API Key is using my own personal account
-
-- **Access control for a hosted Workbook tab.** Hiding the tab is not security
-  (the API is reachable by URL). Real options: backend token auth (moderate) or
-  Entra/SSO tied to a WF group (robust, IT-owned). Kevin/Valentin/IT decision.
 
 - **Run in the cloud (optional).** Consider running the API wrapper / hosting off
   a personal business machine (e.g. a cloud host) so it doesn't depend on
@@ -179,31 +185,18 @@ manual button covers the "I need it right now" case.
   agent's `send_reply` is the natural place — a failed run could email a short
   "we hit an error, we're looking at it" notice to restore user-facing feedback).
 
-- **"Requests not seen as unread" in the shared mailbox** — investigate/fix so
-  the agent reliably picks up new requests.
 
 ### Known bugs / cleanup
-
-- **`# DASHBOARD LAYER` parsed as a table.** The parser treats the
-  `# DASHBOARD LAYER` separator row as a table name. Should be skipped.
-
-- **`dryerdatatable` question** — an open "why dryerdatatable??" note; verify
-  energy/dryer/kiln table naming is consistent across mills (some were merged
-  into `KilnDataTable`).
 
 - **Data inputs not showing in some views / "what is review?"** — a couple of
   UI/data-display inconsistencies noted during testing; audit and resolve.
 
-- **Filename→mill matching is brittle** (exact match). Switch to keyword/fuzzy
-  matching so small renames don't create phantom cards.
+- **Filename→mill matching is finnicky** - file names in onedrive folder must share the same naming conventions
 
 - **First-table header detection.** Some workbooks have a non-standard first
   header the parser can miss (caused an ANG undercount once, fixed by
   standardizing that header). A more robust first-header catch would remove the
   manual step.
-
-- **Excel formula-apply error** when someone inserts/deletes workbook rows —
-  formulas shift/break; needs handling on the workbook side.
 
 - **Remove non-relevant tags** (e.g. fuel tags for mills that don't have them)
   and reconcile duplicate-equipment rows.
@@ -218,16 +211,11 @@ manual button covers the "I need it right now" case.
 
 ### Other
 
-- **Auto-refresh on view (optional).** Current design is scheduled + manual. A
-  "serve cached instantly, refresh in the background, update when done" approach
-  is nicer UX but more complex and probably overkill for slow-changing data —
-  documented as an option, not recommended for now.
-
-- **PowerBI week-slicer issue.** The week slicer didn't work for certain users
-  (e.g. Valentin) while year/month did — narrowed to the `RequestWeek`
-  field/slicer specifically; still unresolved.
 
 - **Scalability.** General goal to keep the parser/flow easy to extend as mills
   and tables grow (header detection is already layout-tolerant; keep it that way).
+- **Faster loading/startup time** 
+- **Updated PowerBI (Home) section**
+- 
 
 See `ARCHITECTURE.md` for the technical detail behind all of this.
