@@ -22,6 +22,8 @@ The handoffs for the workbook management are as follows:
 - **CC the controls tech of each mill's workbook when sending to the agent** - Currently by default, the payload is using my email for `email_from`. For better visibility, adding a condition that sends the controls tech email for each mill workbook would work.
 - **More versatile parsing** - The workbook parser breaks if the columns are out of order and if the headers don't follow the standard naming. Making it more versatile in terms of parsing avoids these hiccups.
 - **Normalize the workbooks** - You can derive all the missing inputs so that it directly maps to the columns in the tag request form (i.e. min max, units) from the other columns in the workbook. This may take some time though.
+- **Making it easier to delete faulty tag requests** - test runs and faulty tag requests leak into `tagrequestItems` and `tagrequestLog` making deleting these records time-consuming. 
+
 
 
 ## What it does
