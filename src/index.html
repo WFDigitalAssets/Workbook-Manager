@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Meta -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tag Request Form — West Fraser</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+
+  <!-- CSV / Excel paste parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- Styles + logic -->
+  <link rel="stylesheet" href="styles.css" />
+  <script src="form.js" defer></script>
+  <script src="workbook.js" defer></script>
+  <script src="dashboard.js" defer></script>
+</head>
+
+<body>
+  <!-- ============ HEADER ============ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <img src="./west-fraser-logo.png" alt="West Fraser Logo" />
+        <div class="header-title">
+          <h1 id="appTitle">Tag Request Form</h1>
+          <p id="appSubtitle">ROC — OSB &amp; Sawmill Form</p>
+        </div>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn" id="nav-home" onclick="homeTab()">Home</button>
+        <button class="nav-btn" id="nav-tag" onclick="tagTab()">Tag Request</button>
+        <button class="nav-btn" id="nav-workbook" onclick="workbookTab()">Workbook</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============ HOME / DASHBOARD VIEW ============ -->
+  <div class="main" id="homeView" style="display:none;">
+    <div class="card">
+      <div class="section-label">Tag requests by mill</div>
+      <div id="dashRequests" class="dash-chart"></div>
+      <div class="dash-legend" id="dashRequestsLegend"></div>
+    </div>
+    <div class="card">
+      <div class="section-label">Tag coverage — recording by mill</div>
+      <div id="dashCoverage" class="dash-chart"></div>
+      <div class="dash-legend" id="dashCoverageLegend"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAG REQUEST (FORM) VIEW ============ -->
+  <div class="main" id="formView">
+    <!-- Instructions -->
+    <div class="card">
+      <div class="section-label">How to submit a tag request</div>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-number">1</div>
+          <p><strong>Select your mill</strong> from the dropdown below.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <p><strong>Add rows</strong> manually or <strong>paste from Excel</strong> using the template.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <p><strong>Use a PLC IP address</strong> so the ROC can locate your tag quickly.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <p><strong>Fix any warnings</strong> highlighted in orange before submitting.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <p><strong>Copy table</strong>, click <strong>Submit</strong>, then paste into the email that opens.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Naming & data type rules -->
+    <div class="card">
+      <div class="section-label">Naming &amp; data type rules</div>
+      <div class="rules-grid">
+        <div class="rule">
+          <h2>Tag name conventions</h2>
+          <ul>
+            <li>TitleCase with no spaces, underscores, or special characters</li>
+            <li>Use Left and Right instead of East, West, North, or South</li>
+            <li>Put the delineation at the end: <span class="code-good">FormerHeight1</span> not <span class="code-bad">Former1Height</span></li>
+            <li>Be descriptive but succinct: <span class="code-good">BlenderSpeedHzCL2</span> not <span class="code-bad">CL2BlenderSpeed</span></li>
+          </ul>
+        </div>
+        <div class="rule rule-warning">
+          <h2>BIT data type is not permitted</h2>
+          <p>BITs cause conflicting display patterns in downstream applications. Use INT instead — it will display a number without decimal places.</p>
+        </div>
+      </div>
+      <p class="rules-note"><strong>Note:</strong> Orange warnings help the ROC team complete your request faster but are not required to fix before submitting</p>
+    </div>
+
+    <!-- Mill select -->
+    <div class="card card-pad">
+      <div class="mill-row">
+        <div class="field">
+          <div>Mill</div>
+          <select id="millSelect" onchange="updateUI()">
+            <option value="">— Select a mill —</option>
+            <optgroup label="OSB Mills">
+              <option value="ALD">ALD</option>
+              <option value="BEM">BEM</option>
+              <option value="BWK">BWK</option>
+              <option value="CHA">CHA</option>
+              <option value="COR">COR</option>
+              <option value="GP">GP</option>
+              <option value="GUN">GUN</option>
+              <option value="HL">HL</option>
+              <option value="HUG">HUG</option>
+              <option value="JEF">JEF</option>
+              <option value="JOA">JOA</option>
+              <option value="LAS">LAS</option>
+              <option value="NAC">NAC</option>
+            </optgroup>
+            <optgroup label="Sawmills">
+              <option value="NWB">NWB</option>
+              <option value="DGM">DGM</option>
+              <option value="MAP">MAP</option>
+              <option value="OPE">OPE</option>
+              <option value="HNM">HNM</option>
+              <option value="LEO">LEO</option>
+              <option value="ARM">ARM</option>
+              <option value="NEW">NEW</option>
+              <option value="JOY">JOY</option>
+              <option value="ANG">ANG</option>
+              <option value="RUS">RUS</option>
+              <option value="MAN">MAN</option>
+              <option value="FIT">FIT</option>
+            </optgroup>
+          </select>
+        </div>
+        <label class="urgent-toggle" id="urgLbl">
+          <input type="checkbox" id="urgFlag" onchange="toggleUrgent(this)" />
+          <span>Mark as urgent</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Entry mode tabs -->
+    <div class="entry-tabs">
+      <button class="entry-tab active" id="manualOption" onclick="switchTab('manual')" disabled>
+        <span class="entry-tab-title">Manual entry</span>
+        <span class="entry-tab-sub">Add rows one at a time using the table below</span>
+      </button>
+      <button class="entry-tab" id="pasteOption" onclick="switchTab('paste')" disabled>
+        <span class="entry-tab-title">Paste from Excel</span>
+        <span class="entry-tab-sub">Copy from the Excel template and import all at once</span>
+      </button>
+    </div>
+
+    <!-- Paste panel -->
+    <div class="paste-panel" id="pastePanel">
+      <div class="paste-top">
+        <div>
+          <div class="paste-title">Paste from Excel</div>
+          <div class="paste-subtitle">Copy rows from the template (including the header) and paste below</div>
+        </div>
+        <div class="paste-buttons">
+          <button class="btn btn-grey" onclick="clearText()">Clear Text</button>
+          <button class="btn btn-grey" onclick="openExcelTemplate()">Open Excel template</button>
+          <button class="btn btn-primary" id="importButton" onclick="processExcelData()" disabled>Import rows</button>
+        </div>
+      </div>
+      <textarea id="pasteTextBox" placeholder="Select your mill first, then paste your Excel data here." disabled></textarea>
+      <div class="paste-hint">Tip: include the header row when copying — the importer will detect column order automatically.</div>
+    </div>
+
+    <!-- Tag data table -->
+    <div class="card">
+      <div class="entry-header">
+        <h2>Tag data</h2>
+        <span id="rowCounter" class="row-counter">0 rows</span>
+      </div>
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th class="col-table req">Table name</th>
+              <th class="col-tag req">Tag name</th>
+              <th class="col-ip">PLC IP address</th>
+              <th class="col-path">PLC path</th>
+              <th class="col-datatype req">Data type</th>
+              <th class="col-units">Units</th>
+              <th class="col-freq">Frequency</th>
+              <th class="col-desc">Description</th>
+              <th class="col-min">Min</th>
+              <th class="col-max">Max</th>
+              <th class="col-newtable">New table?</th>
+              <th class="col-remove"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div id="emptyState" class="empty-state">
+          No tags yet. Click <strong>Add row</strong> or paste from Excel above.
+        </div>
+      </div>
+    </div>
+
+    <!-- 1-second justification -->
+    <div class="just-box" id="justBox">
+      <label>Justification required for 1-second polling</label>
+      <textarea id="just1s" placeholder="Explain why 1-second polling is needed for these tags..."></textarea>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="actions">
+      <div class="actions-left">
+        <button class="btn btn-grey" id="addRow" onclick="addRow()" disabled>+ Add row</button>
+        <button class="btn btn-grey" id="clrAll" onclick="clearAll()" disabled>Clear all</button>
+        <button class="btn btn-grey" id="chkAll" onclick="checkAll()" disabled>Check all new table</button>
+        <button class="btn btn-grey" id="unchkAll" onclick="uncheckAll()" disabled>Uncheck all new table</button>
+      </div>
+      <div class="actions-right">
+        <button class="btn btn-submit" id="submitReq" onclick="doSubmit()" disabled>Submit request</button>
+      </div>
+    </div>
+
+    <div class="clearAllWarning"></div>
+  </div>
+
+  <!-- ============ WORKBOOK VIEW ============ -->
+  <div class="main" id="workbookView" style="display:none;">
+    <div id="wbOverview"></div>
+    <div id="wbDetail" style="display:none;"></div>
+    <div id="wbReconcile" style="display:none;"></div>
+  </div>
+</body>
+</html>
