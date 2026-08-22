@@ -10,11 +10,15 @@ It runs locally on **roc-wf-rv** and is the PowerBI+Workbook companion to the
 web-hosted Tag Request form (which runs separately on ROC-TAGSRUS).
 
 ## TLDR
-**Read these things at least**
+**Read these things**
 
-How to use the workbook manager:
 - The workbook-manager is locally web-hosted in roc-wfm-rv
 - The vm pw is `helpme` and the pin is `1111110`
+- To add a new plc tag workbook you must add it to the shared `PLC Tag` folder in onedrive with the same naming conventions `Mill PLC Tags`
+- Parsing may not work properly and may miss tags if the columns are out of order, or if the header names are not the default 
+- The roc-wf-rv VM is SLOW, So transferring it to web-hosting could be an option in making it run faster. If you do this, you can merge it to roc-tagsrus, put the `PLC Tags` folder under a centralized folder (like the TagsRus sharepoint site/folder) and onedrive sync the files from there.
+
+**Steps in using the workbook manager**
 - 1.To use the workbook manager, ensure that you have an updated version of the statuses
 - 2.Check the new tag inputs by putting them through the LLM call
 - The LLM call will not work and will need to be wired to a new api key
@@ -26,7 +30,7 @@ How to use the workbook manager:
 
 
 
-Two scheduled tasks:
+**Two scheduled tasks:**
 - **Hourly workbook refresh** - Re-analyzes the workbooks once every hour and re-writes to the statuses to `WorkbookStatus` in `TRD_MSTR`. 
 - **Daily send out report** - Uses the smtp send relay from `tagsrus-agent@automationewp.com` to send out a report every weekday at 12PM.
 
