@@ -12,6 +12,20 @@ web-hosted Tag Request form (which runs separately on ROC-TAGSRUS).
 ## TLDR
 **Read these things at least**
 
+How to use the workbook manager:
+- The workbook-manager is locally web-hosted in roc-wfm-rv
+- The vm pw is `helpme` and the pin is `1111110`
+- 1.To use the workbook manager, ensure that you have an updated version of the statuses
+- 2.Check the new tag inputs by putting them through the LLM call
+- The LLM call will not work and will need to be wired to a new api key
+- 3.Click `send new tags` in the new tag tab
+- 4.Change the status of the tags in the workbook to `in progress` once forwarded to the ROC
+- 5.Change the status of those tags to `complete` once ROC has completed the request or `faulty` if it requires fixing
+
+**The workbook manager is still in testing phase and may require additional tweaking for efficient and smooth usage**
+
+
+
 Two scheduled tasks:
 - **Hourly workbook refresh** - Re-analyzes the workbooks once every hour and re-writes to the statuses to `WorkbookStatus` in `TRD_MSTR`. 
 - **Daily send out report** - Uses the smtp send relay from `tagsrus-agent@automationewp.com` to send out a report every weekday at 12PM.
